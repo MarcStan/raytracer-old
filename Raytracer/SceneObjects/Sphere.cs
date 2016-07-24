@@ -5,8 +5,7 @@ namespace Raytracer.SceneObjects
 {
 	public class Sphere : ISceneObject
 	{
-		private Vector3 _position;
-		private float _radius;
+		private readonly BoundingSphere _sphere;
 
 		public Sphere(Vector3 pos, float r)
 		{
@@ -15,13 +14,12 @@ namespace Raytracer.SceneObjects
 				throw new ArgumentOutOfRangeException(nameof(r));
 			}
 
-			_position = pos;
-			_radius = r;
+			_sphere = new BoundingSphere(pos, r);
 		}
 
 		public float? Intersects(Ray ray)
 		{
-			return null;
+			return ray.Intersects(_sphere);
 		}
 	}
 }

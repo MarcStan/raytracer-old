@@ -72,7 +72,7 @@ namespace Raytracer
 
 		private Color CalculateColorFromLights(Intersection intersectionPoint, Scene scene)
 		{
-			throw new System.NotImplementedException();
+			return Color.White;
 		}
 	}
 }

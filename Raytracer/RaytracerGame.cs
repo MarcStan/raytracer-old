@@ -49,7 +49,7 @@ namespace Raytracer
 
 			_scene.Add(new Sphere(new Vector3(0, 0, 0), 1));
 
-			_camera = new Camera(new Vector3(2, 2, 2), new Vector3(0, 0, 0));
+			_camera = new Camera(GraphicsDevice, new Vector3(2, 2, 2), new Vector3(0, 0, 0));
 		}
 
 		private void RaytraceScene()
