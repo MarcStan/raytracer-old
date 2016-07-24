@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Raytracer.SceneObjects;
 using System.Diagnostics;
 
 namespace Raytracer
@@ -44,7 +45,11 @@ namespace Raytracer
 		private void SetupScene()
 		{
 			_scene = new Scene();
-			_camera = new Camera();
+			_scene.Add(new Light(new Vector3(0, 2, 0), Color.White));
+
+			_scene.Add(new Sphere(new Vector3(0, 0, 0), 1));
+
+			_camera = new Camera(new Vector3(2, 2, 2), new Vector3(0, 0, 0));
 		}
 
 		private void RaytraceScene()
