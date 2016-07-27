@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Raytracer.SceneObjects;
 using System;
 using System.Linq;
 
@@ -80,19 +81,63 @@ namespace Raytracer
 			}
 
 			var ray = camera.GetRayForRasterPosition(x, y, width, height);
+			return new Color(GetColorVectorForRay(scene, ray));
+		}
+
+		/// <summary>
+		/// Traces the ray into the scene and returns the vector representing the color.
+		/// </summary>
+		/// <param name="scene"></param>
+		/// <param name="ray"></param>
+		/// <returns></returns>
+		private Vector3 GetColorVectorForRay(Scene scene, Ray ray)
+		{
 			var intersections = scene.GetIntersections(ray);
 			if (intersections.Count == 0)
-				return Color.Black;
+			{
+				return Vector3.Zero;
+			}
 			// sort by distance, we need closest object
 			intersections.Sort((a, b) => a.Distance.CompareTo(b.Distance));
 
 			var intersectionPoint = intersections.First();
-			return CalculateColorFromLights(intersectionPoint, scene);
+
+			// special case. any lightsource will be unaffected by other lights and simply return its own color
+			// this is mainly for debugging purposes (see where the light in the scene is actually positioned)
+			if (intersectionPoint.IntersectedObject is LightSource)
+			{
+				var light = ((LightSource)intersectionPoint.IntersectedObject).Light;
+				return light.Color.ToVector3();
+			}
+
+			// get hit location and normal at hit location
+			var posOnObject = ray.Position + ray.Direction * intersectionPoint.Distance;
+			var normal = intersectionPoint.IntersectedObject.Normal(posOnObject);
+
+			return CalculateNaturalColor(posOnObject, normal, scene);
 		}
 
-		private Color CalculateColorFromLights(Intersection intersectionPoint, Scene scene)
+		/// <summary>
+		/// Calculates the color at the specific location.
+		/// </summary>
+		/// <param name="posOnObject"></param>
+		/// <param name="normal"></param>
+		/// <param name="scene"></param>
+		/// <returns></returns>
+		private Vector3 CalculateNaturalColor(Vector3 posOnObject, Vector3 normal, Scene scene)
 		{
-			return Color.White;
+			var ret = Vector3.Zero;
+			foreach (var light in scene.Lights)
+			{
+				var lightDistance = posOnObject - light.Position;
+				var lightDir = Vector3.Normalize(lightDistance);
+
+				// calculate brightness
+				var illumination = Vector3.Dot(lightDir, normal);
+				var color = illumination > 0 ? illumination * light.Color.ToVector3() * light.Intensity : Vector3.Zero;
+				ret += color;
+			}
+			return ret;
 		}
 	}
 }

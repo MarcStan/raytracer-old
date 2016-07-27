@@ -60,6 +60,7 @@
     <Compile Include="SceneObjects\Box.cs" />
     <Compile Include="SceneObjects\ISceneObject.cs" />
     <Compile Include="SceneObjects\Light.cs" />
+    <Compile Include="SceneObjects\LightSource.cs" />
     <Compile Include="SceneObjects\Plane.cs" />
     <Compile Include="SceneObjects\Sphere.cs" />
   </ItemGroup>

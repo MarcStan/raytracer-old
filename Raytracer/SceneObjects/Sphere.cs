@@ -15,11 +15,17 @@ namespace Raytracer.SceneObjects
 			}
 
 			_sphere = new BoundingSphere(pos, r);
+
 		}
 
 		public float? Intersects(Ray ray)
 		{
 			return ray.Intersects(_sphere);
+		}
+
+		public Vector3 Normal(Vector3 position)
+		{
+			return Vector3.Normalize(_sphere.Center - position);
 		}
 	}
 }

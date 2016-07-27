@@ -8,7 +8,7 @@ namespace Raytracer
 		private readonly GraphicsDevice _device;
 		private Vector3 _position;
 		private Vector3 _direction;
-		private readonly Vector3 _initialDirection = new Vector3(0, 0, -1);
+		private readonly Vector3 _initialDirection = new Vector3(1, 0, 0);
 		private float _rotateHorizontal, _rotateVertical;
 
 		/// <summary>
@@ -84,7 +84,7 @@ namespace Raytracer
 			_rotateHorizontal -= x;
 			_rotateVertical = MathHelper.Clamp(_rotateVertical - y, -MathHelper.PiOver2 + 0.0001f, MathHelper.PiOver2 - 0.0001f);
 
-			_direction = Vector3.Transform(_initialDirection, Matrix.CreateRotationX(_rotateVertical) * Matrix.CreateRotationY(_rotateHorizontal));
+			_direction = Vector3.Transform(_initialDirection, Matrix.CreateRotationZ(_rotateVertical) * Matrix.CreateRotationY(_rotateHorizontal));
 		}
 
 		/// <summary>

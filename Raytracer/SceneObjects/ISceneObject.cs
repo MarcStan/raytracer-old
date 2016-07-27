@@ -11,5 +11,12 @@ namespace Raytracer.SceneObjects
 		/// <returns>Null if no intersection, otherwise returns the distance from the origin of the ray.
 		/// The intersection point can thus be found as ray.Start + ray.Direction * distance.</returns>
 		float? Intersects(Ray ray);
+
+		/// <summary>
+		/// Returns the normal for the specific point on the objects surface.
+		/// </summary>
+		/// <param name="position"></param>
+		/// <returns></returns>
+		Vector3 Normal(Vector3 position);
 	}
 }

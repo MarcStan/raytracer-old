@@ -35,6 +35,10 @@ namespace Raytracer
 			}
 
 			_lights.Add(l);
+#if DEBUG
+			// add lights as spheres so that we can see their position
+			Add(new LightSource(l));
+#endif
 		}
 
 		/// <summary>
