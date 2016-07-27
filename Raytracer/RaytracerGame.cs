@@ -10,6 +10,16 @@ namespace Raytracer
 {
 	public class RaytracerGame : Game
 	{
+		/// <summary>
+		/// This value has proven to work in realtime on a decent computer (rasterized a 100*100 image in less than 10ms).
+		/// </summary>
+		private const int RealtimeRasterLevel = 8;
+
+		/// <summary>
+		/// While not realtime capable this will result in a decent image in less than 130ms on a decent pc.
+		/// </summary>
+		private const int BackgroundRasterLevel = 2;
+
 		private readonly int _width = 800, _height = 800;
 		private Texture2D _raytracedScene;
 		private readonly Color[] _pixels, _secondBuffer;
@@ -25,9 +35,6 @@ namespace Raytracer
 		private CancellationTokenSource _cancelBackgroundTask;
 		private bool _backBufferReady;
 		private long? _ellapsedBackgroundMs;
-
-		private const int RealtimeRasterLevel = 8;
-		private const int BackgroundRasterLevel = 2;
 
 		public RaytracerGame()
 		{
@@ -61,8 +68,8 @@ namespace Raytracer
 			_scene.Add(new Light(new Vector3(-2, 2, 0), Color.White));
 			_scene.Add(new Light(new Vector3(-2, 2, 2), Color.Yellow, 0.5f));
 
-			_scene.Add(new Sphere(new Vector3(0, 0, 0), 1));
-			_scene.Add(new Sphere(new Vector3(-2, 1, 2), 0.5f));
+			_scene.Add(new Sphere(new Vector3(0, 0, 0), 1, new BasicSurface()));
+			_scene.Add(new Sphere(new Vector3(-2, 1, 2), 0.5f, new BasicSurface()));
 
 			_camera = new Camera(GraphicsDevice, new Vector3(-4, 2, 0));
 		}
@@ -88,7 +95,7 @@ namespace Raytracer
 				{
 					var sw = new Stopwatch();
 					sw.Start();
-					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_width, _height, _secondBuffer, BackgroundRasterLevel, _cancelBackgroundTask.Token)))
+					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_width, _height, _secondBuffer, BackgroundRasterLevel, _cancelBackgroundTask?.Token)))
 					{
 						// task only returns true if the entire scene was rendered
 						_backBufferReady = true;
@@ -101,9 +108,22 @@ namespace Raytracer
 			_raytracedScene.SetData(_pixels);
 		}
 
+		private bool _wasActiveLastUpdate;
+
 		protected override void Update(GameTime gameTime)
 		{
 			base.Update(gameTime);
+			if (!IsActive)
+			{
+				_wasActiveLastUpdate = false;
+				return;
+			}
+			if (!_wasActiveLastUpdate)
+			{
+				// center mouse, otherwise the user tabbing back in with the mouse at a different position will rotate the scene around
+				CenterMouse();
+			}
+			_wasActiveLastUpdate = true;
 			if (_exited)
 			{
 				// do not call anything else in update, some monogame methods will just throw

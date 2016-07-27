@@ -5,6 +5,11 @@ namespace Raytracer.SceneObjects
 	public interface ISceneObject
 	{
 		/// <summary>
+		/// The surface of the current object.
+		/// </summary>
+		ISurface Surface { get; }
+
+		/// <summary>
 		/// Returns whether the given object intersects with the ray or not.
 		/// </summary>
 		/// <param name="ray"></param>

@@ -7,16 +7,22 @@ namespace Raytracer.SceneObjects
 	{
 		private readonly BoundingSphere _sphere;
 
-		public Sphere(Vector3 pos, float r)
+		public Sphere(Vector3 pos, float r, ISurface surface)
 		{
 			if (r <= 0)
 			{
 				throw new ArgumentOutOfRangeException(nameof(r));
 			}
+			if (surface == null)
+			{
+				throw new ArgumentNullException(nameof(surface));
+			}
 
 			_sphere = new BoundingSphere(pos, r);
-
+			Surface = surface;
 		}
+
+		public ISurface Surface { get; }
 
 		public float? Intersects(Ray ray)
 		{

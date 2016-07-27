@@ -8,6 +8,11 @@ namespace Raytracer
 	public class Raytracer
 	{
 		/// <summary>
+		/// Number of times the ray may bounce off of surfaces for reflection calculations
+		/// </summary>
+		private const int MaxDepth = 4;
+
+		/// <summary>
 		/// Returns the default raster size this raytracer uses.
 		/// </summary>
 		public int RasterSize { get; }
@@ -97,7 +102,7 @@ namespace Raytracer
 			}
 
 			var ray = camera.GetRayForRasterPosition(x, y, width, height);
-			return new Color(GetColorVectorForRay(scene, ray));
+			return new Color(GetColorVectorForRay(scene, ray, 0));
 		}
 
 		/// <summary>
@@ -105,8 +110,9 @@ namespace Raytracer
 		/// </summary>
 		/// <param name="scene"></param>
 		/// <param name="ray"></param>
+		/// <param name="depth"></param>
 		/// <returns></returns>
-		private Vector3 GetColorVectorForRay(Scene scene, Ray ray)
+		private Vector3 GetColorVectorForRay(Scene scene, Ray ray, int depth)
 		{
 			var intersections = scene.GetIntersections(ray);
 			if (intersections.Count == 0)
@@ -130,7 +136,22 @@ namespace Raytracer
 			var posOnObject = ray.Position + ray.Direction * intersectionPoint.Distance;
 			var normal = intersectionPoint.IntersectedObject.Normal(posOnObject);
 
-			return CalculateNaturalColor(posOnObject, normal, scene);
+			var reflectionDirection = ray.Direction - 2 * Vector3.Dot(normal, ray.Direction) * normal;
+
+			var color = CalculateNaturalColor(posOnObject, normal, scene);
+			if (depth >= MaxDepth)
+			{
+				return color + Vector3.One / 2f;
+			}
+			return color + GetReflectionColor(intersectionPoint.IntersectedObject, posOnObject, reflectionDirection, scene, depth);
+		}
+
+		private Vector3 GetReflectionColor(ISceneObject intersectedObject, Vector3 posOnObject, Vector3 reflectionDirection, Scene scene, int depth)
+		{
+			// multiply reflection power with a ray from the object surface in the reflection direction
+			// move ray slightly away from the object, otherwise we don't get the correct reflection as the ray will simply hit the object with distance = 0
+			Ray reflectionRay = new Ray(posOnObject + 0.001f * reflectionDirection, reflectionDirection);
+			return intersectedObject.Surface.Reflect(posOnObject) * GetColorVectorForRay(scene, reflectionRay, depth + 1);
 		}
 
 		/// <summary>

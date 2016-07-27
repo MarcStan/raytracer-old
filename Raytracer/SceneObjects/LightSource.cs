@@ -10,13 +10,15 @@ namespace Raytracer.SceneObjects
 		public LightSource(Light light)
 		{
 			Light = light;
-			_sphere = new Sphere(light.Position, 0.1f);
+			_sphere = new Sphere(light.Position, 0.1f, new BasicSurface());
 		}
 
 		public Vector3 Normal(Vector3 position)
 		{
 			throw new System.NotImplementedException();
 		}
+
+		public ISurface Surface { get; }
 
 		public float? Intersects(Ray ray)
 		{
