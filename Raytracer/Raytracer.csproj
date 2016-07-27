@@ -63,6 +63,7 @@
     <Compile Include="SceneObjects\LightSource.cs" />
     <Compile Include="SceneObjects\Plane.cs" />
     <Compile Include="SceneObjects\Sphere.cs" />
+    <Compile Include="TracingOptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

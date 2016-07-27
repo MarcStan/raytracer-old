@@ -97,5 +97,20 @@ namespace Raytracer
 			_position += _direction * x;
 			_position += Right * y;
 		}
+
+		/// <summary>
+		/// Creates a new camera with the same parameters as the current one.
+		/// </summary>
+		/// <returns></returns>
+		public Camera Clone()
+		{
+			var cam = new Camera(_device, _position)
+			{
+				_direction = _direction,
+				_rotateHorizontal = _rotateHorizontal,
+				_rotateVertical = _rotateVertical
+			};
+			return cam;
+		}
 	}
 }

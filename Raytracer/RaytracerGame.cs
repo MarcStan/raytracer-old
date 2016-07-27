@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Raytracer.SceneObjects;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Raytracer
 {
@@ -10,7 +12,7 @@ namespace Raytracer
 	{
 		private readonly int _width = 800, _height = 800;
 		private Texture2D _raytracedScene;
-		private Color[] _pixels;
+		private readonly Color[] _pixels, _secondBuffer;
 		private readonly Raytracer _raytracer;
 		private Scene _scene;
 		private Camera _camera;
@@ -20,6 +22,12 @@ namespace Raytracer
 
 		private MouseState _lastMouse;
 		private bool _exited;
+		private CancellationTokenSource _cancelBackgroundTask;
+		private bool _backBufferReady;
+		private long? _ellapsedBackgroundMs;
+
+		private const int RealtimeRasterLevel = 8;
+		private const int BackgroundRasterLevel = 2;
 
 		public RaytracerGame()
 		{
@@ -28,8 +36,9 @@ namespace Raytracer
 				PreferredBackBufferWidth = _width,
 				PreferredBackBufferHeight = _height
 			};
-			_raytracer = new Raytracer(8);
+			_raytracer = new Raytracer(RealtimeRasterLevel);
 			_pixels = new Color[_width * _height];
+			_secondBuffer = new Color[_width * _height];
 		}
 
 		protected override void Initialize()
@@ -60,7 +69,35 @@ namespace Raytracer
 
 		private void RaytraceScene()
 		{
-			_raytracer.TraceScene(_scene, _camera, _width, _height, ref _pixels);
+			_raytracer.TraceScene(_scene, _camera, new TracingOptions(_width, _height, _pixels));
+
+			// if we are not tracing at max detail we will trace max detail in a background thread
+			// once the background thread finishes we will replace our buffer with the max detail buffer
+			// this allows us to move around inside the raytraced scene smoothly
+			// anytime the user stops giving input the scene will also be traced in full detail and appear less blocky
+			if (_raytracer.RasterSize > 1)
+			{
+				// schedule a background task to rasterize in detail; kill any existing task
+				CancelBackgroundTaskIfAny();
+				_backBufferReady = false;
+				_cancelBackgroundTask = new CancellationTokenSource();
+
+				// freeze camera by cloning it, thus any user input will not affect the background rendering
+				var copy = _camera.Clone();
+				Task.Run(() =>
+				{
+					var sw = new Stopwatch();
+					sw.Start();
+					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_width, _height, _secondBuffer, BackgroundRasterLevel, _cancelBackgroundTask.Token)))
+					{
+						// task only returns true if the entire scene was rendered
+						_backBufferReady = true;
+						sw.Stop();
+						_ellapsedBackgroundMs = sw.ElapsedMilliseconds;
+					}
+					sw.Stop();
+				});
+			}
 			_raytracedScene.SetData(_pixels);
 		}
 
@@ -72,6 +109,11 @@ namespace Raytracer
 				// do not call anything else in update, some monogame methods will just throw
 				return;
 			}
+			if (_ellapsedBackgroundMs.HasValue)
+			{
+				Window.Title = $"Raytraced in background {_ellapsedBackgroundMs.Value}ms";
+				_ellapsedBackgroundMs = null;
+			}
 
 			if (Keyboard.GetState().IsKeyDown(Keys.Escape))
 			{
@@ -79,17 +121,30 @@ namespace Raytracer
 				_exited = true;
 				return;
 			}
+			if (_backBufferReady)
+			{
+				_raytracedScene.SetData(_secondBuffer);
+				_backBufferReady = false;
+			}
 
 			HandleInput(gameTime);
 
 			if (_sceneChanged)
 			{
+				// if scene changed there is no point in keeping the background task alive
+				CancelBackgroundTaskIfAny();
 				_sceneChanged = false;
 				_watch.Restart();
 				RaytraceScene();
 				_watch.Stop();
 				Window.Title = $"Raytraced in {_watch.ElapsedMilliseconds}ms";
 			}
+		}
+
+		private void CancelBackgroundTaskIfAny()
+		{
+			_cancelBackgroundTask?.Cancel(true);
+			_cancelBackgroundTask = null;
 		}
 
 		private void HandleInput(GameTime gameTime)
