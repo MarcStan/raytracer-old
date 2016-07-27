@@ -8,7 +8,7 @@ namespace Raytracer
 {
 	public class RaytracerGame : Game
 	{
-		private readonly int _width = 100, _height = 100;
+		private readonly int _width = 800, _height = 800;
 		private Texture2D _raytracedScene;
 		private Color[] _pixels;
 		private readonly Raytracer _raytracer;
@@ -28,7 +28,7 @@ namespace Raytracer
 				PreferredBackBufferWidth = _width,
 				PreferredBackBufferHeight = _height
 			};
-			_raytracer = new Raytracer();
+			_raytracer = new Raytracer(8);
 			_pixels = new Color[_width * _height];
 		}
 

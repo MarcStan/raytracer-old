@@ -6,6 +6,18 @@ namespace Raytracer
 {
 	public class Raytracer
 	{
+		private readonly int _rasterSize;
+
+		/// <summary>
+		/// Creates a new raytracer with the specific stepsize.
+		/// </summary>
+		/// <param name="rasterSize">The rasterSize determines how many pixels are rasterized. A rasterSize of 1 means every pixel is rasterized.
+		/// rasterSize of 2 means every second pixel is rasterized (thus the smallest unit is a 2 by 2 pixel block), etc.</param>
+		public Raytracer(int rasterSize = 1)
+		{
+			_rasterSize = rasterSize;
+		}
+
 		/// <summary>
 		/// When called will trace the scene from the given camera location.
 		/// Width * height must equal the length of the color array.
@@ -20,11 +32,19 @@ namespace Raytracer
 		{
 			var rayCountX = width - 1;
 			var rayCountY = height - 1;
-			for (int y = 0; y < height; y++)
+			for (int y = 0; y < height; y += _rasterSize)
 			{
-				for (int x = 0; x < width; x++)
+				for (int x = 0; x < width; x += _rasterSize)
 				{
-					tracingTarget[x + y * width] = ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
+					var color = ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
+					// set color to the entire raster block size
+					for (int i = 0; i < _rasterSize; i++)
+					{
+						for (int j = 0; j < _rasterSize; j++)
+						{
+							tracingTarget[x + j + (y + i) * width] = color;
+						}
+					}
 				}
 			}
 		}
