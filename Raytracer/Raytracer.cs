@@ -102,7 +102,9 @@ namespace Raytracer
 			}
 
 			var ray = camera.GetRayForRasterPosition(x, y, width, height);
-			return new Color(GetColorVectorForRay(scene, ray, 0));
+			var cv = GetColorVectorForRay(scene, ray, 0);
+			cv = Vector3.Clamp(cv, Vector3.Zero, Vector3.One);
+			return new Color(cv);
 		}
 
 		/// <summary>
@@ -138,7 +140,7 @@ namespace Raytracer
 
 			var reflectionDirection = ray.Direction - 2 * Vector3.Dot(normal, ray.Direction) * normal;
 
-			var color = CalculateNaturalColor(posOnObject, normal, scene);
+			var color = CalculateNaturalColor(posOnObject, normal, scene, intersectionPoint.IntersectedObject.Surface);
 			if (depth >= MaxDepth)
 			{
 				return color + Vector3.One / 2f;
@@ -160,8 +162,9 @@ namespace Raytracer
 		/// <param name="posOnObject"></param>
 		/// <param name="normal"></param>
 		/// <param name="scene"></param>
+		/// <param name="surface">The surface that was hit.</param>
 		/// <returns></returns>
-		private Vector3 CalculateNaturalColor(Vector3 posOnObject, Vector3 normal, Scene scene)
+		private Vector3 CalculateNaturalColor(Vector3 posOnObject, Vector3 normal, Scene scene, ISurface surface)
 		{
 			var ret = Vector3.Zero;
 			foreach (var light in scene.Lights)
@@ -171,8 +174,13 @@ namespace Raytracer
 
 				// calculate brightness
 				var illumination = Vector3.Dot(lightDir, normal);
-				var color = illumination > 0 ? illumination * light.Color.ToVector3() * light.Intensity : Vector3.Zero;
-				ret += color;
+				var c = light.Color.ToVector3() * light.Intensity;
+				var color = illumination > 0 ? c * illumination : Vector3.Zero;
+				ret += color * surface.Diffuse(posOnObject);
+
+				var specular = Vector3.Dot(lightDir, normal);
+				var specularColor = specular > 0 ? c * (float)Math.Pow(specular, surface.Shininess) : Vector3.Zero;
+				ret += specularColor * surface.Specular(posOnObject);
 			}
 			return ret;
 		}

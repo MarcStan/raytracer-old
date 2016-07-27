@@ -8,10 +8,27 @@ namespace Raytracer
 	public interface ISurface
 	{
 		/// <summary>
-		/// Returns the color vector of the reflection at the given location.
+		/// Returns the power of the reflection at the given location.
 		/// </summary>
 		/// <param name="position"></param>
 		/// <returns></returns>
-		Vector3 Reflect(Vector3 position);
+		float Reflect(Vector3 position);
+
+		/// <summary>
+		/// Returns the diffuse color of the reflection at the given location.
+		/// </summary>
+		/// <param name="position"></param>
+		/// <returns></returns>
+		Vector3 Diffuse(Vector3 position);
+
+		/// <summary>
+		/// Returns the specular color of the reflection at the given location.
+		/// </summary>
+		/// <param name="position"></param>
+		/// <returns></returns>
+		Vector3 Specular(Vector3 position);
+
+
+		float Shininess { get; }
 	}
 }
