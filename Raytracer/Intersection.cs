@@ -15,7 +15,8 @@ namespace Raytracer
 			{
 				throw new ArgumentNullException(nameof(o));
 			}
-			if (d <= 0)
+			// 0 is legal if we hit an object with the camera
+			if (d < 0)
 			{
 				throw new ArgumentOutOfRangeException(nameof(d));
 			}

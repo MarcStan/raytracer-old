@@ -6,16 +6,23 @@ namespace Raytracer
 	public class Camera
 	{
 		private readonly GraphicsDevice _device;
-		private readonly Vector3 _position;
-		private readonly Vector3 _lookAt;
-		private readonly Vector3 _direction;
+		private Vector3 _position;
+		private Vector3 _direction;
+		private readonly Vector3 _initialDirection = new Vector3(0, 0, -1);
+		private float _rotateHorizontal, _rotateVertical;
 
-		public Camera(GraphicsDevice device, Vector3 position, Vector3 lookAt)
+		private readonly Vector3 _down = new Vector3(0, -1, 0);
+
+		/// <summary>
+		/// Creates a new camera that looks into -Z direction by default
+		/// </summary>
+		/// <param name="device"></param>
+		/// <param name="position"></param>
+		public Camera(GraphicsDevice device, Vector3 position)
 		{
 			_device = device;
 			_position = position;
-			_lookAt = lookAt;
-			_direction = lookAt - position;
+			_direction = _initialDirection;
 			_direction.Normalize();
 		}
 
@@ -29,13 +36,8 @@ namespace Raytracer
 		/// <returns></returns>
 		public Ray GetRayForRasterPosition(int x, int y, int width, int height)
 		{
-			var down = new Vector3(0, -1, 0);
-			var v1 = Vector3.Cross(_direction, down);
-			v1.Normalize();
-			var right = v1 * _device.Viewport.AspectRatio;
-			var v2 = Vector3.Cross(_direction, right);
-			v2.Normalize();
-			var up = v2;
+			var right = Right;
+			var up = Up;
 
 			// x is in range 0 - width, we need it to be -1 to 1
 			var scalarOffsetX = -1f + x / (float)width * 2f;
@@ -44,6 +46,52 @@ namespace Raytracer
 			var dir = _direction + scalarOffsetX * right + scalarOffsetY * up;
 			dir.Normalize();
 			return new Ray(_position, dir);
+		}
+
+		private Vector3 Up
+		{
+			get
+			{
+				var v2 = Vector3.Cross(_direction, Right);
+				v2.Normalize();
+				var up = v2;
+				return up;
+			}
+		}
+
+		private Vector3 Right
+		{
+			get
+			{
+				var v1 = Vector3.Cross(_direction, _down);
+				v1.Normalize();
+				var right = v1 * _device.Viewport.AspectRatio;
+				return right;
+			}
+		}
+
+		/// <summary>
+		/// Rotates the camera around the given x and y amount.
+		/// </summary>
+		/// <param name="x">The amount of left/right rotation.</param>
+		/// <param name="y">The amount of up/down rotation.</param>
+		public void Rotate(float x, float y)
+		{
+			_rotateHorizontal += x;
+			_rotateVertical = MathHelper.Clamp(_rotateVertical + y, -MathHelper.PiOver2 + 0.0001f, MathHelper.PiOver2 - 0.0001f);
+
+			_direction = Vector3.Transform(_initialDirection, Matrix.CreateRotationX(_rotateVertical) * Matrix.CreateRotationY(_rotateHorizontal));
+		}
+
+		/// <summary>
+		/// Moves the camera around. The values are in relation to the direction the camera is facing.
+		/// </summary>
+		/// <param name="x">The amount of forward/backwards movement. Positive means forward, negative backwards.</param>
+		/// <param name="y">The amount of left/right movement. Positive means right, negative left.</param>
+		public void Move(float x, float y)
+		{
+			_position += _direction * x;
+			_position += Right * y;
 		}
 	}
 }
