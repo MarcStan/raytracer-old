@@ -113,6 +113,11 @@ namespace Raytracer
 		protected override void Update(GameTime gameTime)
 		{
 			base.Update(gameTime);
+			if (_exited)
+			{
+				// do not call anything else in update, some monogame methods will just throw
+				return;
+			}
 			if (!IsActive)
 			{
 				_wasActiveLastUpdate = false;
@@ -124,11 +129,6 @@ namespace Raytracer
 				CenterMouse();
 			}
 			_wasActiveLastUpdate = true;
-			if (_exited)
-			{
-				// do not call anything else in update, some monogame methods will just throw
-				return;
-			}
 			if (_ellapsedBackgroundMs.HasValue)
 			{
 				Window.Title = $"Raytraced in background {_ellapsedBackgroundMs.Value}ms";
@@ -139,6 +139,7 @@ namespace Raytracer
 			{
 				Exit();
 				_exited = true;
+				CancelBackgroundTaskIfAny();
 				return;
 			}
 			if (_backBufferReady)
