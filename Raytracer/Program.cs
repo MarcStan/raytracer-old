@@ -21,11 +21,11 @@ namespace Raytracer
 						stream.CopyTo(f);
 					}
 					MessageBox.Show("Missing raytracer.ini. Created default ini.");
-					return;
 				}
 				catch
 				{
 					MessageBox.Show("Missing raytracer.ini");
+					return;
 				}
 			}
 			var options = IniOptions.Parse("raytracer.ini");
