@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Raytracer.SceneObjects;
 using Raytracer.Surfaces;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,17 +13,7 @@ namespace Raytracer
 {
 	public class RaytracerGame : Game
 	{
-		/// <summary>
-		/// This value has proven to work in realtime on a decent computer (rasterized a 100*100 image in less than 10ms).
-		/// </summary>
-		private const int RealtimeRasterLevel = 16;
-
-		/// <summary>
-		/// While not realtime capable this will result in a decent image in less than 130ms on a decent pc.
-		/// </summary>
-		private const int BackgroundRasterLevel = 2;
-
-		private readonly int _width = 800, _height = 800;
+		private readonly IniOptions _options;
 		private Texture2D _raytracedScene;
 		private readonly Color[] _pixels, _secondBuffer;
 		private readonly Raytracer _raytracer;
@@ -38,16 +29,22 @@ namespace Raytracer
 		private bool _backBufferReady;
 		private long? _ellapsedBackgroundMs;
 
-		public RaytracerGame()
+		public RaytracerGame(IniOptions options)
 		{
+			if (options == null)
+			{
+				throw new ArgumentNullException(nameof(options));
+			}
+
+			_options = options;
 			new GraphicsDeviceManager(this)
 			{
-				PreferredBackBufferWidth = _width,
-				PreferredBackBufferHeight = _height
+				PreferredBackBufferWidth = options.Width,
+				PreferredBackBufferHeight = options.Height
 			};
-			_raytracer = new Raytracer(RealtimeRasterLevel);
-			_pixels = new Color[_width * _height];
-			_secondBuffer = new Color[_width * _height];
+			_raytracer = new Raytracer(options.RealtimeRasterLevel);
+			_pixels = new Color[options.Width * options.Height];
+			_secondBuffer = new Color[options.Width * options.Height];
 		}
 
 		protected override void Initialize()
@@ -57,7 +54,7 @@ namespace Raytracer
 			SetupScene();
 			IsMouseVisible = true;
 
-			_raytracedScene = new Texture2D(GraphicsDevice, _width, _height);
+			_raytracedScene = new Texture2D(GraphicsDevice, _options.Width, _options.Height);
 
 			_spriteBatch = new SpriteBatch(GraphicsDevice);
 			_sceneChanged = true;
@@ -66,7 +63,7 @@ namespace Raytracer
 
 		private void SetupScene()
 		{
-			_scene = new Scene();
+			_scene = new Scene(_options.ShowLightSources);
 			_scene.Add(new Light(new Vector3(-2, 2, 0), Color.White));
 			_scene.Add(new Light(new Vector3(-2, 2, 2), Color.Yellow, 0.5f));
 
@@ -78,7 +75,7 @@ namespace Raytracer
 
 		private void RaytraceScene()
 		{
-			_raytracer.TraceScene(_scene, _camera, new TracingOptions(_width, _height, _pixels));
+			_raytracer.TraceScene(_scene, _camera, new TracingOptions(_options.Width, _options.Height, _pixels));
 			_raytracedScene.SetData(_pixels);
 
 			// if we are not tracing at max detail we will trace max detail in a background thread
@@ -98,7 +95,7 @@ namespace Raytracer
 				{
 					var sw = new Stopwatch();
 					sw.Start();
-					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_width, _height, _secondBuffer, BackgroundRasterLevel, _cancelBackgroundTask?.Token)))
+					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_options.Width, _options.Height, _secondBuffer, _options.BackgroundRasterLevel, _cancelBackgroundTask?.Token)))
 					{
 						// task only returns true if the entire scene was rendered
 						_backBufferReady = true;
@@ -136,8 +133,8 @@ namespace Raytracer
 				Window.Title = $"Raytraced in background {_ellapsedBackgroundMs.Value}ms";
 				_ellapsedBackgroundMs = null;
 			}
-
-			if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+			var kb = Keyboard.GetState();
+			if (_options.Input.InputAction("CloseApplication", k => kb.IsKeyDown(k)))
 			{
 				CancelBackgroundTaskIfAny();
 				Exit();
@@ -186,12 +183,20 @@ namespace Raytracer
 			}
 
 			var diff = mouse.Position - _lastMouse.Position;
+			if (_options.Input.InvertXAxis)
+			{
+				diff.X *= -1;
+			}
+			if (_options.Input.InvertYAxis)
+			{
+				diff.Y *= -1;
+			}
 			if (diff.X != 0 || diff.Y != 0)
 			{
 				_sceneChanged = true;
 				const float mouseSpeed = 0.001f;
-				_camera.Rotate((float)(diff.X * mouseSpeed * gameTime.ElapsedGameTime.TotalMilliseconds) / GraphicsDevice.Viewport.AspectRatio,
-					(float)(diff.Y * mouseSpeed * gameTime.ElapsedGameTime.TotalMilliseconds));
+				_camera.Rotate((float)(diff.X * mouseSpeed * gameTime.ElapsedGameTime.TotalMilliseconds) / GraphicsDevice.Viewport.AspectRatio * _options.Input.MouseAccelerationX,
+					(float)(diff.Y * mouseSpeed * gameTime.ElapsedGameTime.TotalMilliseconds * _options.Input.MouseAccelerationY));
 			}
 			CenterMouse();
 			_lastMouse = Mouse.GetState();
@@ -200,19 +205,19 @@ namespace Raytracer
 			var kb = Keyboard.GetState();
 			float x = 0, y = 0;
 			const float movementSpeed = 0.001f;
-			if (kb.IsKeyDown(Keys.W) || kb.IsKeyDown(Keys.Up))
+			if (_options.Input.InputAction("MoveForward", k => kb.IsKeyDown(k)))
 			{
 				x += movementSpeed;
 			}
-			if (kb.IsKeyDown(Keys.S) || kb.IsKeyDown(Keys.Down))
+			if (_options.Input.InputAction("MoveBackward", k => kb.IsKeyDown(k)))
 			{
 				x -= movementSpeed;
 			}
-			if (kb.IsKeyDown(Keys.D) || kb.IsKeyDown(Keys.Right))
+			if (_options.Input.InputAction("MoveRight", k => kb.IsKeyDown(k)))
 			{
 				y += movementSpeed;
 			}
-			if (kb.IsKeyDown(Keys.A) || kb.IsKeyDown(Keys.Left))
+			if (_options.Input.InputAction("MoveLeft", k => kb.IsKeyDown(k)))
 			{
 				y -= movementSpeed;
 			}
