@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Weavers>
+	<Costura>
+		<IncludeAssemblies>
+			<!-- Only embed files that are actually needed. MonoGame always adds all SharpDX references by default but we don't need DX9, DXInput, etc. -->
+			MonoGame.Framework
+			SharpDX.Direct3D11
+			SharpDX
+			SharpDX.DXGI
+			SharpDX.RawInput
+		</IncludeAssemblies>
+	</Costura>
+</Weavers>
