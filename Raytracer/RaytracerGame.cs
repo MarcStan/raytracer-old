@@ -2,9 +2,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Raytracer.SceneObjects;
+using Raytracer.Surfaces;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Plane = Raytracer.SceneObjects.Plane;
 
 namespace Raytracer
 {
@@ -13,7 +15,7 @@ namespace Raytracer
 		/// <summary>
 		/// This value has proven to work in realtime on a decent computer (rasterized a 100*100 image in less than 10ms).
 		/// </summary>
-		private const int RealtimeRasterLevel = 8;
+		private const int RealtimeRasterLevel = 16;
 
 		/// <summary>
 		/// While not realtime capable this will result in a decent image in less than 130ms on a decent pc.
@@ -68,15 +70,16 @@ namespace Raytracer
 			_scene.Add(new Light(new Vector3(-2, 2, 0), Color.White));
 			_scene.Add(new Light(new Vector3(-2, 2, 2), Color.Yellow, 0.5f));
 
-			_scene.Add(new Sphere(new Vector3(0, 0, 0), 1, new BasicSurface()));
+			_scene.Add(new Sphere(new Vector3(0, 2.5f, 0), 1, new BasicSurface()));
 			_scene.Add(new Sphere(new Vector3(-2, 1, 2), 0.5f, new BasicSurface()));
-
+			_scene.Add(new Plane(new Vector3(0, 1, 0), 0, new CheckerboardSurface()));
 			_camera = new Camera(GraphicsDevice, new Vector3(-4, 2, 0));
 		}
 
 		private void RaytraceScene()
 		{
 			_raytracer.TraceScene(_scene, _camera, new TracingOptions(_width, _height, _pixels));
+			_raytracedScene.SetData(_pixels);
 
 			// if we are not tracing at max detail we will trace max detail in a background thread
 			// once the background thread finishes we will replace our buffer with the max detail buffer
@@ -105,7 +108,6 @@ namespace Raytracer
 					sw.Stop();
 				});
 			}
-			_raytracedScene.SetData(_pixels);
 		}
 
 		private bool _wasActiveLastUpdate;
@@ -137,9 +139,9 @@ namespace Raytracer
 
 			if (Keyboard.GetState().IsKeyDown(Keys.Escape))
 			{
+				CancelBackgroundTaskIfAny();
 				Exit();
 				_exited = true;
-				CancelBackgroundTaskIfAny();
 				return;
 			}
 			if (_backBufferReady)
@@ -164,7 +166,7 @@ namespace Raytracer
 
 		private void CancelBackgroundTaskIfAny()
 		{
-			_cancelBackgroundTask?.Cancel(true);
+			_cancelBackgroundTask?.Cancel();
 			_cancelBackgroundTask = null;
 		}
 

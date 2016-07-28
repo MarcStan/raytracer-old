@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Raytracer
+namespace Raytracer.Surfaces
 {
 	public class BasicSurface : ISurface
 	{

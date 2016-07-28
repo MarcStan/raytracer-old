@@ -10,11 +10,13 @@ namespace Raytracer
 	/// </summary>
 	public class Scene
 	{
+		private readonly bool _makeLightSourcesVisible;
 		private readonly List<ISceneObject> _sceneObjects;
 		private readonly List<Light> _lights;
 
-		public Scene()
+		public Scene(bool makeLightSourcesVisible = false)
 		{
+			_makeLightSourcesVisible = makeLightSourcesVisible;
 			_sceneObjects = new List<ISceneObject>();
 			_lights = new List<Light>();
 		}
@@ -35,10 +37,12 @@ namespace Raytracer
 			}
 
 			_lights.Add(l);
-#if DEBUG
-			// add lights as spheres so that we can see their position
-			Add(new LightSource(l));
-#endif
+			if (_makeLightSourcesVisible)
+			{
+				// add lights as spheres so that we can see their position
+				Add(new LightSource(l));
+			}
+
 		}
 
 		/// <summary>

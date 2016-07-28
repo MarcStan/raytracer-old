@@ -1,10 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
+using Raytracer.Surfaces;
 
 namespace Raytracer.SceneObjects
 {
+	/// <summary>
+	/// Debug entity to visualize a light source.
+	/// This entity will only be rendered and the surface will not be used.
+	/// </summary>
 	public class LightSource : ISceneObject
 	{
 		public Light Light { get; }
+
 		private readonly Sphere _sphere;
 
 		public LightSource(Light light)
@@ -18,7 +24,7 @@ namespace Raytracer.SceneObjects
 			throw new System.NotImplementedException();
 		}
 
-		public ISurface Surface { get; }
+		public ISurface Surface => null;
 
 		public float? Intersects(Ray ray)
 		{

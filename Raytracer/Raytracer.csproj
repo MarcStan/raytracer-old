@@ -50,7 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BasicSurface.cs" />
+    <Compile Include="Surfaces\BasicSurface.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Intersection.cs" />
     <Compile Include="ISurface.cs" />
@@ -65,6 +65,7 @@
     <Compile Include="SceneObjects\LightSource.cs" />
     <Compile Include="SceneObjects\Plane.cs" />
     <Compile Include="SceneObjects\Sphere.cs" />
+    <Compile Include="Surfaces\CheckerboardSurface.cs" />
     <Compile Include="TracingOptions.cs" />
   </ItemGroup>
   <ItemGroup>

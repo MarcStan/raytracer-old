@@ -10,12 +10,8 @@ namespace Raytracer
 		private Vector3 _direction;
 		private readonly Vector3 _initialDirection = new Vector3(1, 0, 0);
 		private float _rotateHorizontal, _rotateVertical;
-
-		/// <summary>
-		/// The raytracer is inverted due to drawing pixels top to bottom. so invert the down vector.
-		/// Objects added to the scene with a positive Y value will thus appear above the camera
-		/// </summary>
-		private readonly Vector3 _down = new Vector3(0, 1, 0);
+		
+		private readonly Vector3 _down = new Vector3(0, -1, 0);
 
 		/// <summary>
 		/// Creates a new camera that looks into -Z direction by default
@@ -81,7 +77,7 @@ namespace Raytracer
 		/// <param name="y">The amount of up/down rotation.</param>
 		public void Rotate(float x, float y)
 		{
-			_rotateHorizontal -= x;
+			_rotateHorizontal += x;
 			_rotateVertical = MathHelper.Clamp(_rotateVertical - y, -MathHelper.PiOver2 + 0.0001f, MathHelper.PiOver2 - 0.0001f);
 
 			_direction = Vector3.Transform(_initialDirection, Matrix.CreateRotationZ(_rotateVertical) * Matrix.CreateRotationY(_rotateHorizontal));
