@@ -64,13 +64,13 @@ namespace Raytracer
 		private void SetupScene()
 		{
 			_scene = new Scene(_options.ShowLightSources);
-			_scene.Add(new Light(new Vector3(-2, 2, 0), Color.White));
-			_scene.Add(new Light(new Vector3(-2, 2, 2), Color.Yellow, 0.5f));
+			_scene.Add(new Light(new Vector3(2, 2, 0), Color.White));
+			_scene.Add(new Light(new Vector3(2, 2, 2), Color.Yellow, 0.5f));
 
 			_scene.Add(new Sphere(new Vector3(0, 2.5f, 0), 1, new BasicSurface()));
-			_scene.Add(new Sphere(new Vector3(-2, 1, 2), 0.5f, new BasicSurface()));
+			_scene.Add(new Sphere(new Vector3(2, 1, 2), 0.5f, new BasicSurface()));
 			_scene.Add(new Plane(new Vector3(0, 1, 0), 0, new CheckerboardSurface()));
-			_camera = new Camera(GraphicsDevice, new Vector3(-4, 2, 0));
+			_camera = new Camera(GraphicsDevice, new Vector3(4, 2, 0));
 		}
 
 		private void RaytraceScene()

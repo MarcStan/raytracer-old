@@ -8,10 +8,10 @@ namespace Raytracer
 		private readonly GraphicsDevice _device;
 		private Vector3 _position;
 		private Vector3 _direction;
-		private readonly Vector3 _initialDirection = new Vector3(1, 0, 0);
+		private readonly Vector3 _initialDirection = new Vector3(-1, 0, 0);
 		private float _rotateHorizontal, _rotateVertical;
-		
-		private readonly Vector3 _down = new Vector3(0, -1, 0);
+
+		private readonly Vector3 _unitUp = new Vector3(0, 1, 0);
 
 		/// <summary>
 		/// Creates a new camera that looks into -Z direction by default
@@ -42,7 +42,9 @@ namespace Raytracer
 			// x is in range 0 - width, we need it to be -1 to 1
 			var scalarOffsetX = -1f + x / (float)width * 2f;
 			// y is in range 0 - height, we need it to be -1 to 1
-			var scalarOffsetY = -1f + y / (float)height * 2f;
+			// needs to be the inverse of x since x is left to right both in world and raster space
+			// but -1 y is down in world space but up in raster space
+			var scalarOffsetY = 1f - y / (float)height * 2f;
 			var dir = _direction + scalarOffsetX * right + scalarOffsetY * up;
 			dir.Normalize();
 			return new Ray(_position, dir);
@@ -63,7 +65,7 @@ namespace Raytracer
 		{
 			get
 			{
-				var v1 = Vector3.Cross(_direction, _down);
+				var v1 = Vector3.Cross(_unitUp, _direction);
 				v1.Normalize();
 				var right = v1 * _device.Viewport.AspectRatio;
 				return right;
@@ -78,7 +80,7 @@ namespace Raytracer
 		public void Rotate(float x, float y)
 		{
 			_rotateHorizontal += x;
-			_rotateVertical = MathHelper.Clamp(_rotateVertical - y, -MathHelper.PiOver2 + 0.0001f, MathHelper.PiOver2 - 0.0001f);
+			_rotateVertical = MathHelper.Clamp(_rotateVertical + y, -MathHelper.PiOver2 + 0.0001f, MathHelper.PiOver2 - 0.0001f);
 
 			_direction = Vector3.Transform(_initialDirection, Matrix.CreateRotationZ(_rotateVertical) * Matrix.CreateRotationY(_rotateHorizontal));
 		}

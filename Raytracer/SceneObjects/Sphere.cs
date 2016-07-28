@@ -31,7 +31,7 @@ namespace Raytracer.SceneObjects
 
 		public Vector3 Normal(Vector3 position)
 		{
-			return Vector3.Normalize(_sphere.Center - position);
+			return Vector3.Normalize(position - _sphere.Center);
 		}
 	}
 }

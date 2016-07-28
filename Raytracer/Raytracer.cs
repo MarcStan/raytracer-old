@@ -57,8 +57,7 @@ namespace Raytracer
 					{
 						return false;
 					}
-					// invert Y position because in world coordinates we declared Y as up, but in pixels Y is down
-					var color = ComputeColorAtPosition(x, rayCountY - y, rayCountX, rayCountY, camera, scene);
+					var color = ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
 					// set color to the entire raster block size
 					for (int i = 0; i < raster; i++)
 					{
