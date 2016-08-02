@@ -52,7 +52,7 @@ namespace Raytracer
 			base.Initialize();
 
 			SetupScene();
-			IsMouseVisible = true;
+			IsMouseVisible = false;
 
 			_raytracedScene = new Texture2D(GraphicsDevice, _options.Width, _options.Height);
 
@@ -69,6 +69,8 @@ namespace Raytracer
 
 			_scene.Add(new Sphere(new Vector3(0, 2.5f, 0), 1, new BasicSurface()));
 			_scene.Add(new Sphere(new Vector3(2, 1, 2), 0.5f, new BasicSurface()));
+			_scene.Add(new Sphere(new Vector3(4, 2, 2), 1.5f, new BasicSurface()));
+			_scene.Add(new Sphere(new Vector3(0, 3, 2), 1f, new BasicSurface()));
 			_scene.Add(new Plane(new Vector3(0, 1, 0), 0, new CheckerboardSurface()));
 			_camera = new Camera(GraphicsDevice, new Vector3(4, 2, 0));
 		}
