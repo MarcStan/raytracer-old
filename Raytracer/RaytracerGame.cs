@@ -284,7 +284,7 @@ namespace Raytracer
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			_spriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.PointClamp);
+			_spriteBatch.Begin(SpriteSortMode.Deferred, null, _options.SamplerState);
 			_spriteBatch.Draw(_renderReference, GraphicsDevice.Viewport.Bounds, Color.White);
 			_spriteBatch.End();
 		}

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Input;
+﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -27,7 +28,9 @@ namespace Raytracer
 
 		public IniInput Input { get; }
 
-		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input)
+		public SamplerState SamplerState { get; }
+
+		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState sampler)
 		{
 			Width = w;
 			Height = h;
@@ -35,6 +38,7 @@ namespace Raytracer
 			BackgroundRasterLevel = backgroundRaster;
 			Input = input;
 			ShowLightSources = showLightSources;
+			SamplerState = sampler;
 		}
 
 		public static IniOptions Parse(string file)
@@ -97,7 +101,25 @@ namespace Raytracer
 			int realtimeRaster = int.Parse(map["video"]["RealtimeRasterSize"]);
 			int backgroundRaster = int.Parse(map["video"]["BackgroundRasterSize"]);
 			var showLightSources = bool.Parse(map["video"]["ShowLightSources"]);
-			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input);
+			SamplerState sampler;
+			var stringSampler = map["video"]["SamplerState"];
+			// unfortunatelly SamplerState is not an enum, so we parse manually
+			// we also don't care about wrap or clamp as our texture is only displayed once, so default to clamp always
+			switch (stringSampler)
+			{
+				case "Point":
+					sampler = SamplerState.PointClamp;
+					break;
+				case "Linear":
+					sampler = SamplerState.LinearClamp;
+					break;
+				case "Anisotropic":
+					sampler = SamplerState.AnisotropicClamp;
+					break;
+				default:
+					throw new NotSupportedException("Valid states are: Anisotropic, Linear, Point");
+			}
+			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, sampler);
 		}
 
 		public class IniInput
