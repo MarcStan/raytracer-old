@@ -14,20 +14,23 @@ namespace Raytracer
 	public class RaytracerGame : Game
 	{
 		private readonly IniOptions _options;
-		private Texture2D _raytracedScene;
-		private readonly Color[] _pixels, _secondBuffer;
+		private Texture2D _primaryScene, _backgroundScene, _renderReference;
+		private TracingOptions _primaryTracingOptions, _backgroundTracingOptions;
 		private readonly Raytracer _raytracer;
 		private Scene _scene;
 		private Camera _camera;
 		private SpriteBatch _spriteBatch;
 		private bool _sceneChanged;
 		private Stopwatch _watch;
+		private Task _backgroundTask;
 
 		private MouseState _lastMouse;
 		private bool _exited;
 		private CancellationTokenSource _cancelBackgroundTask;
 		private bool _backBufferReady;
 		private long? _ellapsedBackgroundMs;
+
+		private bool _wasActiveLastUpdate;
 
 		public RaytracerGame(IniOptions options)
 		{
@@ -42,9 +45,24 @@ namespace Raytracer
 				PreferredBackBufferWidth = options.Width,
 				PreferredBackBufferHeight = options.Height
 			};
-			_raytracer = new Raytracer(options.RealtimeRasterLevel);
-			_pixels = new Color[options.Width * options.Height];
-			_secondBuffer = new Color[options.Width * options.Height];
+			_raytracer = new Raytracer();
+
+			if (options.Width % options.RealtimeRasterLevel != 0)
+			{
+				throw new NotSupportedException("Width must be divisible by RealtimeRasterSize");
+			}
+			if (options.Height % options.RealtimeRasterLevel != 0)
+			{
+				throw new NotSupportedException("Height must be divisible by RealtimeRasterSize");
+			}
+			if (options.Width % options.BackgroundRasterLevel != 0)
+			{
+				throw new NotSupportedException("Width must be divisible by RealtimeRasterSize");
+			}
+			if (options.Height % options.BackgroundRasterLevel != 0)
+			{
+				throw new NotSupportedException("Height must be divisible by RealtimeRasterSize");
+			}
 		}
 
 		protected override void Initialize()
@@ -53,9 +71,31 @@ namespace Raytracer
 
 			SetupScene();
 			IsMouseVisible = false;
+			// instead of creating a texture of the size width * height where we then end up filling Raster*Raster sized blocks with the same pixeldata
+			// we create a smaller buffer and scale it when rendering
+			var primaryWidth = _options.Width / _options.RealtimeRasterLevel;
+			var primaryHeight = _options.Height / _options.RealtimeRasterLevel;
+			var pixels = new Color[primaryWidth * primaryHeight];
 
-			_raytracedScene = new Texture2D(GraphicsDevice, _options.Width, _options.Height);
+			_primaryTracingOptions = new TracingOptions(primaryHeight, primaryHeight, pixels, _options.RealtimeRasterLevel);
 
+			if (_options.BackgroundRasterLevel < _options.RealtimeRasterLevel)
+			{
+				// only enable background rendering if it is more accurate than realtime rendering, otherwise disable it by leaving the backgroundTracingOptions null
+				var backgroundWidth = _options.Width / _options.BackgroundRasterLevel;
+				var backgroundHeight = _options.Width / _options.BackgroundRasterLevel;
+				var secondBuffer = new Color[backgroundWidth * backgroundHeight];
+				_backgroundTracingOptions = new TracingOptions(backgroundWidth, backgroundHeight, secondBuffer, _options.BackgroundRasterLevel);
+				_backgroundScene = new Texture2D(GraphicsDevice, backgroundWidth, backgroundHeight);
+			}
+
+			_primaryScene = new Texture2D(GraphicsDevice, primaryWidth, primaryHeight);
+			// we have 2 distinct textures: primary and background
+			// primary is usually smaller (for real time rendering)
+			// for rendering we always use _renderReference which just points to one of the 2 other textures
+
+			// start of with the primary scene
+			_renderReference = _primaryScene;
 			_spriteBatch = new SpriteBatch(GraphicsDevice);
 			_sceneChanged = true;
 			_watch = new Stopwatch();
@@ -77,29 +117,41 @@ namespace Raytracer
 
 		private void RaytraceScene()
 		{
-			_raytracer.TraceScene(_scene, _camera, new TracingOptions(_options.Width, _options.Height, _pixels));
-			_raytracedScene.SetData(_pixels);
+			_raytracer.TraceScene(_scene, _camera, _primaryTracingOptions);
+			_primaryScene.SetData(_primaryTracingOptions.TracingTarget);
+			_renderReference = _primaryScene;
 
 			// if we are not tracing at max detail we will trace max detail in a background thread
 			// once the background thread finishes we will replace our buffer with the max detail buffer
 			// this allows us to move around inside the raytraced scene smoothly
 			// anytime the user stops giving input the scene will also be traced in full detail and appear less blocky
-			if (_raytracer.RasterSize > 1)
+			if (_backgroundTracingOptions != null)
 			{
-				// schedule a background task to rasterize in detail; kill any existing task
-				CancelBackgroundTaskIfAny();
-				_backBufferReady = false;
-				_cancelBackgroundTask = new CancellationTokenSource();
+				// schedule a background task to rasterize in detail
 
 				// freeze camera by cloning it, thus any user input will not affect the background rendering
 				var copy = _camera.Clone();
-				Task.Run(() =>
+				var previousTask = _backgroundTask;
+				var previousCts = _cancelBackgroundTask;
+				if (previousTask != null)
+				{
+					// kill any existing task
+					previousCts.Cancel();
+					previousTask.Wait();
+					_backBufferReady = false;
+				}
+				_cancelBackgroundTask = new CancellationTokenSource();
+				_backgroundTask = Task.Run(() =>
 				{
 					var sw = new Stopwatch();
 					sw.Start();
-					if (_raytracer.TraceScene(_scene, copy, new TracingOptions(_options.Width, _options.Height, _secondBuffer, _options.BackgroundRasterLevel, _cancelBackgroundTask?.Token)))
+
+					if (_raytracer.TraceScene(_scene, copy, _backgroundTracingOptions, _cancelBackgroundTask.Token))
 					{
 						// task only returns true if the entire scene was rendered
+
+						// we call set only on main render thread, otherwise it might be called from background thread while the texture is being rendered
+						// so delegate work to main thread by setting this flag to true
 						_backBufferReady = true;
 						sw.Stop();
 						_ellapsedBackgroundMs = sw.ElapsedMilliseconds;
@@ -108,8 +160,6 @@ namespace Raytracer
 				});
 			}
 		}
-
-		private bool _wasActiveLastUpdate;
 
 		protected override void Update(GameTime gameTime)
 		{
@@ -130,22 +180,23 @@ namespace Raytracer
 				CenterMouse();
 			}
 			_wasActiveLastUpdate = true;
-			if (_ellapsedBackgroundMs.HasValue)
-			{
-				Window.Title = $"Raytraced in background {_ellapsedBackgroundMs.Value}ms";
-				_ellapsedBackgroundMs = null;
-			}
 			var kb = Keyboard.GetState();
 			if (_options.Input.InputAction("CloseApplication", k => kb.IsKeyDown(k)))
 			{
-				CancelBackgroundTaskIfAny();
+				_cancelBackgroundTask?.Cancel();
 				Exit();
 				_exited = true;
 				return;
 			}
 			if (_backBufferReady)
 			{
-				_raytracedScene.SetData(_secondBuffer);
+				if (_ellapsedBackgroundMs.HasValue)
+				{
+					Window.Title = $"Raytraced in background {_ellapsedBackgroundMs.Value}ms";
+					_ellapsedBackgroundMs = null;
+				}
+				_backgroundScene.SetData(_backgroundTracingOptions.TracingTarget);
+				_renderReference = _backgroundScene;
 				_backBufferReady = false;
 			}
 
@@ -153,20 +204,12 @@ namespace Raytracer
 
 			if (_sceneChanged)
 			{
-				// if scene changed there is no point in keeping the background task alive
-				CancelBackgroundTaskIfAny();
 				_sceneChanged = false;
 				_watch.Restart();
 				RaytraceScene();
 				_watch.Stop();
 				Window.Title = $"Raytraced in {_watch.ElapsedMilliseconds}ms";
 			}
-		}
-
-		private void CancelBackgroundTaskIfAny()
-		{
-			_cancelBackgroundTask?.Cancel();
-			_cancelBackgroundTask = null;
 		}
 
 		private void HandleInput(GameTime gameTime)
@@ -241,8 +284,8 @@ namespace Raytracer
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			_spriteBatch.Begin();
-			_spriteBatch.Draw(_raytracedScene, Vector2.Zero, Color.White);
+			_spriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.PointClamp);
+			_spriteBatch.Draw(_renderReference, GraphicsDevice.Viewport.Bounds, Color.White);
 			_spriteBatch.End();
 		}
 	}

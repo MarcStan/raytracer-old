@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Threading;
 
 namespace Raytracer
 {
@@ -12,11 +11,7 @@ namespace Raytracer
 
 		public Color[] TracingTarget { get; }
 
-		public int? RasterSize { get; }
-
-		public CancellationToken? CancellationToken { get; }
-
-		public TracingOptions(int w, int h, Color[] target, int? raster = null, CancellationToken? token = null)
+		public TracingOptions(int w, int h, Color[] target, int raster)
 		{
 			if (w < 0 || h < 0)
 			{
@@ -34,8 +29,6 @@ namespace Raytracer
 			Width = w;
 			Height = h;
 			TracingTarget = target;
-			RasterSize = raster;
-			CancellationToken = token;
 		}
 	}
 }

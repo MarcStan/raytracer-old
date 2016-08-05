@@ -2,6 +2,7 @@
 using Raytracer.SceneObjects;
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace Raytracer
 {
@@ -13,26 +14,6 @@ namespace Raytracer
 		private const int MaxDepth = 4;
 
 		/// <summary>
-		/// Returns the default raster size this raytracer uses.
-		/// </summary>
-		public int RasterSize { get; }
-
-		/// <summary>
-		/// Creates a new raytracer with the specific stepsize.
-		/// </summary>
-		/// <param name="rasterSize">Must be either 1 or power of 2. The rasterSize determines how many pixels are rasterized. A rasterSize of 1 means every pixel is rasterized.
-		/// rasterSize of 2 means every second pixel is rasterized (thus the smallest unit is a 2 by 2 pixel block), etc.</param>
-		public Raytracer(int rasterSize = 1)
-		{
-			// check if power of 2
-			if ((rasterSize & (rasterSize - 1)) != 0)
-			{
-				throw new ArgumentOutOfRangeException(nameof(rasterSize), "must be power of 2");
-			}
-			RasterSize = rasterSize;
-		}
-
-		/// <summary>
 		/// When called will trace the scene from the given camera location.
 		/// Width * height must equal the length of the color array.
 		/// Each pixel in the color array will be traced. The convention is X lines first then y lines (accessed via tracingTarget[x + y * width]).
@@ -40,32 +21,25 @@ namespace Raytracer
 		/// <param name="scene"></param>
 		/// <param name="camera"></param>
 		/// <param name="options"></param>
+		/// <param name="token">Optional cancellation token. If cancelled the method will return false.</param>
 		/// <returns>True if the scene was fully traced, false otherwise.</returns>>
-		public bool TraceScene(Scene scene, Camera camera, TracingOptions options)
+		public bool TraceScene(Scene scene, Camera camera, TracingOptions options, CancellationToken? token = null)
 		{
 			var width = options.Width;
 			var height = options.Height;
-			var raster = options.RasterSize ?? RasterSize;
 			var rayCountX = width - 1;
 			var rayCountY = height - 1;
 			var tracingTarget = options.TracingTarget;
-			for (int y = 0; y < height; y += raster)
+			for (int y = 0; y < height; y++)
 			{
-				for (int x = 0; x < width; x += raster)
+				for (int x = 0; x < width; x++)
 				{
-					if (options.CancellationToken?.IsCancellationRequested ?? false)
+					if (token?.IsCancellationRequested ?? false)
 					{
 						return false;
 					}
 					var color = ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
-					// set color to the entire raster block size
-					for (int i = 0; i < raster; i++)
-					{
-						for (int j = 0; j < raster; j++)
-						{
-							tracingTarget[x + j + (y + i) * width] = color;
-						}
-					}
+					tracingTarget[x + y * width] = color;
 				}
 			}
 			return true;
