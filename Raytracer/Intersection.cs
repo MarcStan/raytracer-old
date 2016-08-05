@@ -3,10 +3,19 @@ using System;
 
 namespace Raytracer
 {
+	/// <summary>
+	/// Object holding data about an intersection that occured.
+	/// </summary>
 	public struct Intersection
 	{
+		/// <summary>
+		/// The object that the ray intersected with.
+		/// </summary>
 		public ISceneObject IntersectedObject { get; }
 
+		/// <summary>
+		/// The distance along the ray where the intersection occured.
+		/// </summary>
 		public float Distance { get; }
 
 		public Intersection(ISceneObject o, float d)

@@ -2,6 +2,9 @@
 
 namespace Raytracer.Surfaces
 {
+	/// <summary>
+	/// Degault surface that is reflective.
+	/// </summary>
 	public class BasicSurface : ISurface
 	{
 		public float Reflect(Vector3 position)

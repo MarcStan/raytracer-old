@@ -3,6 +3,9 @@ using System;
 
 namespace Raytracer.Surfaces
 {
+	/// <summary>
+	/// A surface that creates a black/white checkerboard on the XZ axis.
+	/// </summary>
 	public class CheckerboardSurface : ISurface
 	{
 		public float Reflect(Vector3 position)

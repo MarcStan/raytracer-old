@@ -20,6 +20,10 @@ namespace Raytracer
 		/// </summary>
 		public int BackgroundRasterLevel { get; }
 
+		/// <summary>
+		/// If true, lightsources will be displayed as spheres.
+		/// These spheres will not react to the lighting model but instead only return their base color.
+		/// </summary>
 		public bool ShowLightSources { get; }
 
 		public int Width { get; }

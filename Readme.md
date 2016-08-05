@@ -12,4 +12,14 @@ While the user is giving input (mouse or any of the bound keys) the realtime mod
 
 ![Realtime](/realtime.gif?raw=true)
 
-In this case a scene with 400x400 pixels and a raster size of 4 is raytraced. The raster size of 4 means that 4x4 pixel blocks always receive the same value. Essentially a 100x100 scene is raytraced and upscaled to 400x400. On modern CPUs this takes less than 16ms and can thus run at 60 fps (wheras raytracing a full 400x400 pixels requires 200ms+).
+In this case a scene with 400x400 pixels and a raster size of 4 is raytraced. Which means that actually a scene with 100x100 pixels is raytraced and then upscaled to 400x400. On modern CPUs this takes less than 16ms and can thus run at 60 fps (wheras raytracing a full 400x400 pixels requires 200ms+). When upscaling is needed the user can select point, linear or anisotropic sampling to smooth the scene.
+
+## Features
+
+* Realtime raytracing (with lower detail level)
+* Moving camera through the scene (WASD + mouse)
+* Accurate raytracing (executed in the background whenever the user stops moving)
+* Phong-model based (ambient + diffuse + specular lighting)
+* Objects can be added to the scene (as of now only spheres and planes supported)
+* Object surfaces can be set per object (reflective, checkerboard, ..)
+* Software rendering (entirely on the CPU)
