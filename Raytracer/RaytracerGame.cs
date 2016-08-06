@@ -77,7 +77,7 @@ namespace Raytracer
 			var primaryHeight = _options.Height / _options.RealtimeRasterLevel;
 			var pixels = new Color[primaryWidth * primaryHeight];
 
-			_primaryTracingOptions = new TracingOptions(primaryHeight, primaryHeight, pixels);
+			_primaryTracingOptions = new TracingOptions(primaryWidth, primaryHeight, pixels);
 
 			if (_options.BackgroundRasterLevel < _options.RealtimeRasterLevel)
 			{
