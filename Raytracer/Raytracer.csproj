@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IniOptions.cs" />
+    <Compile Include="MultiThreadedRaytracer.cs" />
     <Compile Include="Surfaces\BasicSurface.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Intersection.cs" />

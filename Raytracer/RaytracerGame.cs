@@ -45,7 +45,8 @@ namespace Raytracer
 				PreferredBackBufferWidth = options.Width,
 				PreferredBackBufferHeight = options.Height
 			};
-			_raytracer = new Raytracer();
+
+			_raytracer = _options.Multithreaded ? new MultiThreadedRaytracer() : new Raytracer();
 
 			if (options.Width % options.RealtimeRasterLevel != 0)
 			{

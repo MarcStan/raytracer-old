@@ -25,7 +25,7 @@ namespace Raytracer
 		/// <param name="options"></param>
 		/// <param name="token">Optional cancellation token. If cancelled the method will return false.</param>
 		/// <returns>True if the scene was fully traced, false otherwise.</returns>>
-		public bool TraceScene(Scene scene, Camera camera, TracingOptions options, CancellationToken? token = null)
+		public virtual bool TraceScene(Scene scene, Camera camera, TracingOptions options, CancellationToken? token = null)
 		{
 			var width = options.Width;
 			var height = options.Height;
@@ -62,8 +62,9 @@ namespace Raytracer
 		/// <param name="scene"></param>
 		/// <param name="ray"></param>
 		/// <param name="depth"></param>
+		/// <param name="sampleId"></param>
 		/// <returns></returns>
-		private Vector3 GetColorVectorForRay(Scene scene, Ray ray, int depth, int sampleId)
+		protected Vector3 GetColorVectorForRay(Scene scene, Ray ray, int depth, int sampleId)
 		{
 			var intersection = CheckRayIntersection(ray, scene);
 			if (!intersection.HasValue)

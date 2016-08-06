@@ -38,6 +38,8 @@ namespace Raytracer
 		/// </summary>
 		public bool ShowLightSources { get; }
 
+		public bool Multithreaded { get; }
+
 		public int Width { get; }
 
 		public int Height { get; }
@@ -48,7 +50,7 @@ namespace Raytracer
 
 		public SamplerState BackgroundSamplerState { get; }
 
-		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState realtimeSampler, SamplerState backgroundSampler, int realtimeSamples, int backgroundSamples)
+		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState realtimeSampler, SamplerState backgroundSampler, int realtimeSamples, int backgroundSamples, bool multithread)
 		{
 			RealtimeSampleCount = realtimeSamples;
 			BackgroundSampleCount = backgroundSamples;
@@ -60,6 +62,7 @@ namespace Raytracer
 			ShowLightSources = showLightSources;
 			RealtimeSamplerState = realtimeSampler;
 			BackgroundSamplerState = backgroundSampler;
+			Multithreaded = multithread;
 		}
 
 		public static IniOptions Parse(string file)
@@ -127,8 +130,8 @@ namespace Raytracer
 
 			var realtimeSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
 			var backgroundSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
-
-			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, realtimeSampler, backgroundSampler, realtimeSamples, backgroundSamples);
+			var multithread = bool.Parse(map["video"]["Multithreaded"]);
+			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, realtimeSampler, backgroundSampler, realtimeSamples, backgroundSamples, multithread);
 		}
 
 		private static SamplerState ParseSampler(string s)
