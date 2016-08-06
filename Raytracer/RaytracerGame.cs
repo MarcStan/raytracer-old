@@ -284,7 +284,10 @@ namespace Raytracer
 
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			_spriteBatch.Begin(SpriteSortMode.Deferred, null, _options.SamplerState);
+			// we can find out which scene we are rendering by checking which references equals our renderReference
+			// if not primaryScene then it must be _backgroundScene
+			var realtime = _renderReference == _primaryScene;
+			_spriteBatch.Begin(SpriteSortMode.Deferred, null, realtime ? _options.RealtimeSamplerState : _options.BackgroundSamplerState);
 			_spriteBatch.Draw(_renderReference, GraphicsDevice.Viewport.Bounds, Color.White);
 			_spriteBatch.End();
 		}

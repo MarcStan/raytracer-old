@@ -44,9 +44,11 @@ namespace Raytracer
 
 		public IniInput Input { get; }
 
-		public SamplerState SamplerState { get; }
+		public SamplerState RealtimeSamplerState { get; }
 
-		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState sampler, int realtimeSamples, int backgroundSamples)
+		public SamplerState BackgroundSamplerState { get; }
+
+		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState realtimeSampler, SamplerState backgroundSampler, int realtimeSamples, int backgroundSamples)
 		{
 			RealtimeSampleCount = realtimeSamples;
 			BackgroundSampleCount = backgroundSamples;
@@ -56,7 +58,8 @@ namespace Raytracer
 			BackgroundRasterLevel = backgroundRaster;
 			Input = input;
 			ShowLightSources = showLightSources;
-			SamplerState = sampler;
+			RealtimeSamplerState = realtimeSampler;
+			BackgroundSamplerState = backgroundSampler;
 		}
 
 		public static IniOptions Parse(string file)
@@ -121,25 +124,28 @@ namespace Raytracer
 			int realtimeSamples = int.Parse(map["video"]["RealtimeSampleCount"]);
 			int backgroundSamples = int.Parse(map["video"]["BackgroundSampleCount"]);
 			var showLightSources = bool.Parse(map["video"]["ShowLightSources"]);
-			SamplerState sampler;
-			var stringSampler = map["video"]["SamplerState"];
+
+			var realtimeSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
+			var backgroundSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
+
+			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, realtimeSampler, backgroundSampler, realtimeSamples, backgroundSamples);
+		}
+
+		private static SamplerState ParseSampler(string s)
+		{
 			// unfortunatelly SamplerState is not an enum, so we parse manually
 			// we also don't care about wrap or clamp as our texture is only displayed once, so default to clamp always
-			switch (stringSampler)
+			switch (s)
 			{
 				case "Point":
-					sampler = SamplerState.PointClamp;
-					break;
+					return SamplerState.PointClamp;
 				case "Linear":
-					sampler = SamplerState.LinearClamp;
-					break;
+					return SamplerState.LinearClamp;
 				case "Anisotropic":
-					sampler = SamplerState.AnisotropicClamp;
-					break;
+					return SamplerState.AnisotropicClamp;
 				default:
 					throw new NotSupportedException("Valid states are: Anisotropic, Linear, Point");
 			}
-			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, sampler, realtimeSamples, backgroundSamples);
 		}
 
 		public class IniInput
