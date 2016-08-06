@@ -77,7 +77,7 @@ namespace Raytracer
 			var primaryHeight = _options.Height / _options.RealtimeRasterLevel;
 			var pixels = new Color[primaryWidth * primaryHeight];
 
-			_primaryTracingOptions = new TracingOptions(primaryWidth, primaryHeight, pixels);
+			_primaryTracingOptions = new TracingOptions(primaryWidth, primaryHeight, pixels, _options.RealtimeSampleCount);
 
 			if (_options.BackgroundRasterLevel < _options.RealtimeRasterLevel)
 			{
@@ -85,7 +85,7 @@ namespace Raytracer
 				var backgroundWidth = _options.Width / _options.BackgroundRasterLevel;
 				var backgroundHeight = _options.Width / _options.BackgroundRasterLevel;
 				var secondBuffer = new Color[backgroundWidth * backgroundHeight];
-				_backgroundTracingOptions = new TracingOptions(backgroundWidth, backgroundHeight, secondBuffer);
+				_backgroundTracingOptions = new TracingOptions(backgroundWidth, backgroundHeight, secondBuffer, _options.BackgroundSampleCount);
 				_backgroundScene = new Texture2D(GraphicsDevice, backgroundWidth, backgroundHeight);
 			}
 
@@ -105,7 +105,7 @@ namespace Raytracer
 		{
 			_scene = new Scene(_options.ShowLightSources);
 			_scene.Add(new Light(new Vector3(2, 2, 0), Color.White));
-			_scene.Add(new Light(new Vector3(2, 2, 2), Color.Yellow, 0.5f));
+			//_scene.Add(new Light(new Vector3(2, 2, 2), Color.Yellow, 0.5f));
 
 			_scene.Add(new Sphere(new Vector3(0, 2.5f, 0), 1, new BasicSurface()));
 			_scene.Add(new Sphere(new Vector3(2, 1, 2), 0.5f, new BasicSurface()));

@@ -23,3 +23,4 @@ In this case a scene with 400x400 pixels and a raster size of 4 is raytraced. Wh
 * Objects can be added to the scene (as of now only spheres and planes supported)
 * Object surfaces can be set per object (reflective, checkerboard, ..)
 * Software rendering (entirely on the CPU)
+* Soft shadows by using multiple samples per pixel with slightly randomized light positions and averaging the result

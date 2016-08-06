@@ -16,9 +16,21 @@ namespace Raytracer
 		public int RealtimeRasterLevel { get; }
 
 		/// <summary>
+		/// The number of rays cast per pixel when in realtime mode.
+		/// More samples means a better shadow representation (soft shadows), although it is recommended to keep it at 1 for realtime samples.
+		/// </summary>
+		public int RealtimeSampleCount { get; }
+
+		/// <summary>
 		/// While not realtime capable this will result in a decent image in less than 130ms on a decent pc.
 		/// </summary>
 		public int BackgroundRasterLevel { get; }
+
+		/// <summary>
+		/// The number of rays cast per pixel when in background mode.
+		/// More samples means a better shadow representation (soft shadows), the result will look decent starting at 32.
+		/// </summary>
+		public int BackgroundSampleCount { get; }
 
 		/// <summary>
 		/// If true, lightsources will be displayed as spheres.
@@ -34,8 +46,10 @@ namespace Raytracer
 
 		public SamplerState SamplerState { get; }
 
-		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState sampler)
+		private IniOptions(int w, int h, int realtimeRaster, int backgroundRaster, bool showLightSources, IniInput input, SamplerState sampler, int realtimeSamples, int backgroundSamples)
 		{
+			RealtimeSampleCount = realtimeSamples;
+			BackgroundSampleCount = backgroundSamples;
 			Width = w;
 			Height = h;
 			RealtimeRasterLevel = realtimeRaster;
@@ -104,6 +118,8 @@ namespace Raytracer
 			int h = int.Parse(map["video"]["Height"]);
 			int realtimeRaster = int.Parse(map["video"]["RealtimeRasterSize"]);
 			int backgroundRaster = int.Parse(map["video"]["BackgroundRasterSize"]);
+			int realtimeSamples = int.Parse(map["video"]["RealtimeSampleCount"]);
+			int backgroundSamples = int.Parse(map["video"]["BackgroundSampleCount"]);
 			var showLightSources = bool.Parse(map["video"]["ShowLightSources"]);
 			SamplerState sampler;
 			var stringSampler = map["video"]["SamplerState"];
@@ -123,7 +139,7 @@ namespace Raytracer
 				default:
 					throw new NotSupportedException("Valid states are: Anisotropic, Linear, Point");
 			}
-			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, sampler);
+			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, sampler, realtimeSamples, backgroundSamples);
 		}
 
 		public class IniInput
