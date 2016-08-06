@@ -38,8 +38,14 @@ namespace Raytracer
 					{
 						return false;
 					}
-					var color = ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
-					tracingTarget[x + y * width] = color;
+					Vector3 averageColor = Vector3.Zero;
+					const int sampleSize = 1;
+					for (int i = 0; i < sampleSize; i++)
+					{
+						averageColor += ComputeColorAtPosition(x, y, rayCountX, rayCountY, camera, scene);
+					}
+					averageColor /= sampleSize;
+					tracingTarget[x + y * width] = new Color(averageColor);
 				}
 			}
 			return true;
@@ -56,7 +62,7 @@ namespace Raytracer
 		/// <param name="camera"></param>
 		/// <param name="scene"></param>
 		/// <returns></returns>
-		private Color ComputeColorAtPosition(int x, int y, int width, int height, Camera camera, Scene scene)
+		private Vector3 ComputeColorAtPosition(int x, int y, int width, int height, Camera camera, Scene scene)
 		{
 			if (width <= 0)
 			{
@@ -78,7 +84,7 @@ namespace Raytracer
 			var ray = camera.GetRayForRasterPosition(x, y, width, height);
 			var cv = GetColorVectorForRay(scene, ray, 0);
 			cv = Vector3.Clamp(cv, Vector3.Zero, Vector3.One);
-			return new Color(cv);
+			return cv;
 		}
 
 		/// <summary>
@@ -90,15 +96,12 @@ namespace Raytracer
 		/// <returns></returns>
 		private Vector3 GetColorVectorForRay(Scene scene, Ray ray, int depth)
 		{
-			var intersections = scene.GetIntersections(ray);
-			if (intersections.Count == 0)
+			var intersection = CheckRayIntersection(ray, scene);
+			if (!intersection.HasValue)
 			{
 				return Vector3.Zero;
 			}
-			// sort by distance, we need closest object
-			intersections.Sort((a, b) => a.Distance.CompareTo(b.Distance));
-
-			var intersectionPoint = intersections.First();
+			var intersectionPoint = intersection.Value;
 
 			// special case. any lightsource will be unaffected by other lights and simply return its own color
 			// this is mainly for debugging purposes (see where the light in the scene is actually positioned)
@@ -120,6 +123,26 @@ namespace Raytracer
 				return color + Vector3.One / 2f;
 			}
 			return color + GetReflectionColor(intersectionPoint.IntersectedObject, posOnObject, reflectionDirection, scene, depth);
+		}
+
+		/// <summary>
+		/// Returns the closest intersection point (if any), otherwise null.
+		/// </summary>
+		/// <param name="ray"></param>
+		/// <param name="scene"></param>
+		/// <returns></returns>
+		public Intersection? CheckRayIntersection(Ray ray, Scene scene)
+		{
+			var intersections = scene.GetIntersections(ray);
+			if (intersections.Count == 0)
+			{
+				return null;
+			}
+			// sort by distance, we need closest object
+			intersections.Sort((a, b) => a.Distance.CompareTo(b.Distance));
+
+			var intersectionPoint = intersections.First();
+			return intersectionPoint;
 		}
 
 		private Vector3 GetReflectionColor(ISceneObject intersectedObject, Vector3 posOnObject, Vector3 reflectionDirection, Scene scene, int depth)
@@ -146,6 +169,17 @@ namespace Raytracer
 				var lightDistance = light.Position - posOnObject;
 				var lightDir = Vector3.Normalize(lightDistance);
 
+				// check if there is another object between the light source and the position for which to calculate the lighting
+				// if so, then this light doesn't actually hit the object, so it can be ignored
+				var intersects = CheckRayIntersection(new Ray(posOnObject + lightDir * 0.001f, lightDir), scene);
+				if (intersects.HasValue)
+				{
+					var distance = intersects.Value.Distance;
+					bool isInShadow = distance <= lightDistance.Length();
+					// ignore light if the object is in the shadow of another object
+					if (isInShadow)
+						continue;
+				}
 				// calculate brightness
 				var illumination = Vector3.Dot(lightDir, normal);
 				var c = light.Color.ToVector3() * light.Intensity;
