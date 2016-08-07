@@ -129,7 +129,7 @@ namespace Raytracer
 			var showLightSources = bool.Parse(map["video"]["ShowLightSources"]);
 
 			var realtimeSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
-			var backgroundSampler = ParseSampler(map["video"]["RealtimeSamplerState"]);
+			var backgroundSampler = ParseSampler(map["video"]["BackgroundSamplerState"]);
 			var multithread = bool.Parse(map["video"]["Multithreaded"]);
 			return new IniOptions(w, h, realtimeRaster, backgroundRaster, showLightSources, input, realtimeSampler, backgroundSampler, realtimeSamples, backgroundSamples, multithread);
 		}
