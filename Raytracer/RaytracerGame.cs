@@ -185,7 +185,7 @@ namespace Raytracer
 			if (_options.Input.InputAction("CloseApplication", k => kb.IsKeyDown(k)))
 			{
 				_cancelBackgroundTask?.Cancel();
-				Exit();
+				Environment.Exit(0);
 				_exited = true;
 				return;
 			}

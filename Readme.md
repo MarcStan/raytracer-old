@@ -1,4 +1,8 @@
-# A C# based raytracer
+# A C# 100% software based raytracer I wrote when I was in university
+
+The implementation uses less rays while the player is moving to allow "realtime raytracing" at the cost of quality.
+
+Once no more input is received, a background thread will compute a more detailed image of the scene and replace the backbuffer once it is ready.
 
 ![Raytraced scene](/raytraced.png?raw=true)
 
@@ -6,9 +10,9 @@ Uses monogame to render the raytraced scene.
 
 Supports only spheres and planes with different surfaces as of now.
 
-The raytracer has two modes: realtime and background.
+While the user is giving input (mouse or any of the bound keys) the realtime mode is used, which by default has a reduced raster size.
 
-While the user is giving input (mouse or any of the bound keys) the realtime mode is used, which by default has a reduced raster size. Once the user stops giving input, a background thread is started to raytrace the scene in higher detail. Once finished, the buffer is swapped and the scene is presented to the user with higher details.
+Once the user stops giving input, a background thread is started to raytrace the scene in higher detail. Once finished, the buffer is swapped and the scene is presented to the user with higher details.
 
 ![Realtime](/realtime.gif?raw=true)
 
@@ -24,3 +28,9 @@ In this case a scene with 400x400 pixels and a raster size of 4 is raytraced. Wh
 * Object surfaces can be set per object (reflective, checkerboard, ..)
 * Software rendering (entirely on the CPU)
 * Soft shadows by using multiple samples per pixel with slightly randomized light positions and averaging the result
+
+**Note on performance: Use the release build without a debugger attached. It will be many times faster!**
+
+# Build
+
+Use Visual Studio or the build script (which assumes MSBuild is in your path).
