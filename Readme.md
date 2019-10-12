@@ -33,4 +33,12 @@ In this case a scene with 400x400 pixels and a raster size of 4 is raytraced. Wh
 
 # Build
 
-Use Visual Studio or the build script (which assumes MSBuild is in your path).
+Use Visual Studio or run this build script in the project directory (which assumes MSBuild is in your path):
+
+```
+msbuild.exe Raytracer.sln /t:Build /p:Configuration=Release /nr:false
+mkdir "!Releases"
+
+echo f|xcopy Raytracer\bin\Release\Raytracer.exe !Releases\Raytracer.exe /y
+echo f|xcopy Raytracer\bin\Release\Raytracer.ini !Releases\Raytracer.ini /y
+```
