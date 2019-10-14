@@ -1,5 +1,7 @@
 # A C# 100% software based raytracer I wrote when I was in university
 
+Please see https://github.com/MarcStan/Raytracer for a modern version (build on .Net Core) with more features (CPU/GPU/compute shaders).
+
 The implementation uses less rays while the player is moving to allow "realtime raytracing" at the cost of quality.
 
 Once no more input is received, a background thread will compute a more detailed image of the scene and replace the backbuffer once it is ready.
